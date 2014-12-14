@@ -21,4 +21,4 @@ ENV GOARCH amd64
 RUN mkdir -p /opt/local
 RUN curl -L https://storage.googleapis.com/golang/go1.4.0.linux-amd64.tar.gz -o /tmp/go.tar.gz
 RUN tar -C /opt/local -xzf /tmp/go.tar.gz
-RUN (cd /opt/local/go/s../.m/a.ke.bash --no-clean)
+RUN (cd /opt/local/go/src; make.bash --no-clean)
