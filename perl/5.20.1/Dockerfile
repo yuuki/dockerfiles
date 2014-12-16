@@ -1,3 +1,6 @@
+FROM debian:wheezy
+MAINTAINER y_uuki
+
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN echo "deb http://cdn.debian.net/debian/ wheezy main contrib non-free" > /etc/apt/sources.list.d/mirror.jp.list
