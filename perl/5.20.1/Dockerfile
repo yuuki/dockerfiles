@@ -25,8 +25,8 @@ RUN perl-build $PERL_VERSION /opt/perl-$PERL_VERSION
 
 RUN mkdir -p $APPROOT
 
-COPY cpanfile $APPROOT/cpanfile
-COPY cpanfile.snapshot $APPROOT/cpanfile.snapshot
+ONBUILD COPY cpanfile $APPROOT/cpanfile
+ONBUILD COPY cpanfile.snapshot $APPROOT/cpanfile.snapshot
 
 WORKDIR $APPROOT
 RUN carton install
