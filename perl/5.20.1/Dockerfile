@@ -26,5 +26,3 @@ RUN curl -sL http://cpanmin.us/ | /opt/perl-$PERL_VERSION/bin/perl - --notest Ap
 
 RUN mkdir -p $APPROOT
 ONBUILD WORKDIR $APPROOT
-
-ENTRYPOINT ["perl"]
