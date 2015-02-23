@@ -7,8 +7,9 @@ RUN echo "deb http://cdn.debian.net/debian/ wheezy main contrib non-free" > /etc
 RUN echo "deb http://cdn.debian.net/debian/ wheezy-updates main contrib" >> /etc/apt/sources.list.d/mirror.jp.list
 RUN rm /etc/apt/sources.list
 
+RUN apt-get -y update && apt-get -yq --no-install-recommends --force-yes install libc6=2.13-38+deb7u6 libc-bin=2.13-38+deb7u6 libc6-dev 
 RUN apt-get -y update && \
-    apt-get -yq --no-install-recommends install curl ca-certificates tar git build-essential mysql-client && \
+    apt-get -yq --no-install-recommends install curl ca-certificates tar git build-essential && \
     apt-get clean && \
     rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
 
