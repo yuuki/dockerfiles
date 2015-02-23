@@ -14,7 +14,7 @@ RUN apt-get -y update && \
 
 ENV GOPATH /go
 ENV GOROOT /opt/local/go
-ENV PATH $PATH:/opt/local/go/bin
+ENV PATH $PATH:/opt/local/go/bin:/go/bin
 ENV GOOS linux
 ENV GOARCH amd64
 
