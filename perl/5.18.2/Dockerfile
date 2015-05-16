@@ -3,11 +3,7 @@ MAINTAINER y_uuki
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN echo "deb http://cdn.debian.net/debian/ wheezy main contrib non-free" > /etc/apt/sources.list.d/mirror.jp.list
-RUN echo "deb http://cdn.debian.net/debian/ wheezy-updates main contrib" >> /etc/apt/sources.list.d/mirror.jp.list
-RUN rm /etc/apt/sources.list
-
-RUN apt-get update && \
+RUN apt-get update -yq && \
     apt-get install -yq --no-install-recommends build-essential curl ca-certificates tar bzip2 patch && \
     apt-get clean && \
     rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
