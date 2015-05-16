@@ -10,7 +10,7 @@ RUN apt-get update -yq && \
 
 ENV PERL_VERSION 5.20.1
 ENV PATH /opt/perl-$PERL_VERSION/bin:$PATH
-ENV CPAN_INSTALL_PATH /cpan
+ENV PERL_CARTON_PATH /cpan
 
 # Perl
 RUN curl -sL https://raw.githubusercontent.com/tokuhirom/Perl-Build/master/perl-build > /usr/bin/perl-build
