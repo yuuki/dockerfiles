@@ -1,10 +1,8 @@
 #!/bin/bash
-set -e
+set -exo pipefail
 
 if [ "$1" = 'mysqld_safe' ]; then
-    chown -R mysql "$MYSQLDATA"
-	
-    if [ -z "$(ls -A "$MYSQLDATA")" ]; then
+    if [ ! -d "$MYSQLDATA/mysql" ]; then
     	echo "Initializing database..."
         mysql_install_db --user=mysql
         
@@ -18,7 +16,7 @@ if [ "$1" = 'mysqld_safe' ]; then
         	mysqld_safe --skip-networking &
 			pid="$!"
 			
-			mysql=( mysql --protocol=socket -uroot )
+			mysql=( mysql -uroot )
 
 			for i in {30..0}; do
 				if echo 'SELECT 1' | "${mysql[@]}" &> /dev/null; then
@@ -34,18 +32,24 @@ if [ "$1" = 'mysqld_safe' ]; then
 			fi
 
 "${mysql[@]}" <<-EOSQL
-	SET @@SESSION.SQL_LOG_BIN=0;
-	DELETE FROM mysql.user ;
-	GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-	FLUSH PRIVILEGES ;
+    SET @@SESSION.SQL_LOG_BIN=0 ;
+    DELETE FROM mysql.user ;
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' ;
+    FLUSH PRIVILEGES ;
 EOSQL
 
 			if ! kill -s TERM "$pid" || ! wait "$pid"; then
 				echo >&2 'MySQL init process failed.'
 				exit 1
 			fi
+
+            echo
+		    echo 'MySQL init process done. Ready for start up.'
+		    echo
         fi
     fi
+
+    chown -R mysql "$MYSQLDATA"
 fi
 
 exec "$@"
