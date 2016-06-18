@@ -1,0 +1,62 @@
+FROM debian:jessie
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# Perl 5.8.8
+RUN apt-get update -yq && \
+    apt-get install -yq --no-install-recommends build-essential curl ca-certificates tar bzip2 patch && \
+    apt-get clean && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+
+ENV PERL_VERSION 5.8.8
+ENV PATH /opt/perl-$PERL_VERSION/bin:$PATH
+ENV PERL_DIR /opt/perl-$PERL_VERSION
+
+RUN curl -sL https://raw.githubusercontent.com/tokuhirom/Perl-Build/master/perl-build > /usr/bin/perl-build && \ 
+    perl -pi -e 's%^#!/usr/bin/env perl%#!/usr/bin/perl%g' /usr/bin/perl-build && \
+    chmod +x /usr/bin/perl-build
+RUN mkdir -p $PERL_DIR/src/
+RUN perl-build --build-dir $PERL_DIR/src/ -Duseithreads -A ccflags=-fPIC $PERL_VERSION $PERL_DIR
+RUN curl -sL http://cpanmin.us/ | $PERL_DIR/bin/perl - --notest App::cpanminus Carton
+
+# Apache 1.3
+ENV APACHE1_VERSION 1.3.42
+ENV APACHE1_DIR /opt/httpd-$APACHE1_VERSION
+
+RUN apt-get update -yq && \
+    apt-get install -yq --no-install-recommends libpcre3 libpcre3-dev openssl libssl-dev libdb-dev && \
+    apt-get clean && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+
+RUN mkdir -p $APACHE1_DIR/src
+RUN curl -SL http://archive.apache.org/dist/httpd/apache_$APACHE1_VERSION.tar.bz2 -o /tmp/httpd-$APACHE1_VERSION.tar.bz2 && \
+    echo "c296799b6c93f653ad57ba3b6a0a7c17a5467e8e */tmp/httpd-$APACHE1_VERSION.tar.bz2" | sha1sum -c - && \
+    tar --strip-components=1 -xjf /tmp/httpd-$APACHE1_VERSION.tar.bz2 -C $APACHE1_DIR/src && \
+    rm /tmp/httpd-$APACHE1_VERSION.tar.bz2
+WORKDIR /opt/httpd-$APACHE1_VERSION/src
+
+# http://ubuntuforums.org/showthread.php?t=2162008
+# dso build for standard modules. exclude the modules that failes to build and no use
+RUN bash ./configure --prefix=/opt/httpd-$APACHE1_VERSION --enable-module=all --enable-shared=max --disable-module=auth_dbm --disable-module=auth_db
+RUN perl -pi -e 's/getline/apache_getline/' src/support/htdigest.c && \ 
+    perl -pi -e 's/getline/apache_getline/' src/support/htpasswd.c && \
+    perl -pi -e 's/getline/apache_getline/' src/support/logresolve.c
+RUN make && make install
+
+# mod_perl 1.3
+ENV MOD_PERL_VERSION 1.31
+ENV MOD_PERL_DIR /opt/mod_perl-$MOD_PERL_VERSION
+
+RUN mkdir -p $MOD_PERL_DIR/src
+RUN curl -SL http://ftp.jaist.ac.jp/pub/apache/perl/mod_perl-$MOD_PERL_VERSION.tar.gz -o /tmp/mod_perl-$MOD_PERL_VERSION.tar.gz && \
+    echo "5f6eadf2b0fc24ed4376d7708226391baa14c73f */tmp/mod_perl-$MOD_PERL_VERSION.tar.gz" | sha1sum -c - && \
+    tar --strip-components=1 -xzf /tmp/mod_perl-$MOD_PERL_VERSION.tar.gz -C $MOD_PERL_DIR/src && \
+    rm /tmp/mod_perl-$MOD_PERL_VERSION.tar.gz
+RUN cpanm HTML::HeadParser LWP
+WORKDIR $MOD_PERL_DIR/src
+RUN perl Makefile.PL USE_APXS=1 WITH_APXS=/opt/httpd-$APACHE1_VERSION/bin/apxs EVERYTHING=1
+RUN make && make test && make install
+
+RUN tar czf /mod_perl2.tar.gz -C /opt/ ./perl-$PERL_VERSION ./httpd-$APACHE1_VERSION
+CMD ["cat", "/mod_perl2.tar.gz"]
+# vim:ft=Dockerfile
