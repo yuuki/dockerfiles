@@ -1,0 +1,86 @@
+FROM debian:jessie
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# Perl
+RUN apt-get update -yq && \
+    apt-get install -yq --no-install-recommends build-essential curl ca-certificates tar bzip2 patch && \
+    apt-get clean && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+
+ENV PERL_VERSION 5.8.8
+ENV PATH /opt/perl-$PERL_VERSION/bin:$PATH
+
+RUN curl -sL https://raw.githubusercontent.com/tokuhirom/Perl-Build/master/perl-build > /usr/bin/perl-build
+RUN perl -pi -e 's%^#!/usr/bin/env perl%#!/usr/bin/perl%g' /usr/bin/perl-build
+RUN chmod +x /usr/bin/perl-build
+RUN mkdir -p /opt/perl-$PERL_VERSION/src/
+RUN perl-build --build-dir /opt/perl-$PERL_VERSION/src/ -Duseithreads -A ccflags=-fPIC $PERL_VERSION /opt/perl-$PERL_VERSION
+RUN curl -sL http://cpanmin.us/ | /opt/perl-$PERL_VERSION/bin/perl - --notest App::cpanminus Carton
+# RUN mkdir -p /target
+# RUN tar -C /opt -czf /target/perl.tar.gz perl-$PERL_VERSION
+
+# Apache2
+ENV APACHE2_VERSION 2.4.10
+ENV APR_VERSION 1.5.2
+ENV APR_UTIL_VERSION 1.5.4
+
+RUN apt-get update -yq && \
+    apt-get install -yq --no-install-recommends libpcre3 libpcre3-dev openssl libssl-dev && \
+    apt-get clean && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+RUN mkdir -p /opt/httpd-$APACHE2_VERSION/src
+RUN curl -SL http://archive.apache.org/dist/httpd/httpd-$APACHE2_VERSION.tar.bz2 -o /tmp/httpd-$APACHE2_VERSION.tar.bz2 && \
+    echo "00f5c3f8274139bd6160eda2cf514fa9b74549e5 */tmp/httpd-$APACHE2_VERSION.tar.bz2" | sha1sum -c - && \
+    tar --strip-components=1 -xjf /tmp/httpd-$APACHE2_VERSION.tar.bz2 -C /opt/httpd-$APACHE2_VERSION/src && \
+    rm /tmp/httpd-$APACHE2_VERSION.tar.bz2
+# apr & apr-util
+RUN mkdir -p /opt/httpd-$APACHE2_VERSION/src/srclib/apr /opt/httpd-$APACHE2_VERSION/src/srclib/apr-util
+RUN curl -SL http://ftp.jaist.ac.jp/pub/apache//apr/apr-$APR_VERSION.tar.bz2 -o /tmp/apr-$APR_VERSION.tar.bz2 && \
+    echo "4e9769f3349fe11fc0a5e1b224c236aa */tmp/apr-$APR_VERSION.tar.bz2" | md5sum -c - && \
+    tar --strip-components=1 -xjf /tmp/apr-$APR_VERSION.tar.bz2 -C /opt/httpd-$APACHE2_VERSION/src/srclib/apr && \
+    rm /tmp/apr-$APR_VERSION.tar.bz2
+RUN curl -SL http://ftp.jaist.ac.jp/pub/apache//apr/apr-util-$APR_UTIL_VERSION.tar.bz2 -o /tmp/apr-util-$APR_UTIL_VERSION.tar.bz2 && \
+    echo "2202b18f269ad606d70e1864857ed93c */tmp/apr-util-$APR_UTIL_VERSION.tar.bz2" | md5sum -c - && \
+    tar --strip-components=1 -xjf /tmp/apr-util-$APR_UTIL_VERSION.tar.bz2 -C /opt/httpd-$APACHE2_VERSION/src/srclib/apr-util && \
+    rm /tmp/apr-util-$APR_UTIL_VERSION.tar.bz2
+WORKDIR /opt/httpd-$APACHE2_VERSION/src
+RUN ./configure --prefix=/opt/httpd-$APACHE2_VERSION --enable-mods-shared=all --with-mpm=prefork
+RUN make && make install
+
+# mod_perl2
+ENV MOD_PERL_VERSION 2.0.9
+RUN mkdir -p /opt/mod_perl-$MOD_PERL_VERSION/src
+RUN curl -SL http://ftp.jaist.ac.jp/pub/apache/perl/mod_perl-$MOD_PERL_VERSION.tar.gz -o /tmp/mod_perl-$MOD_PERL_VERSION.tar.gz && \
+    echo "5de3018214da21de186d758a429d5c78f827caa5 */tmp/mod_perl-$MOD_PERL_VERSION.tar.gz" | sha1sum -c - && \
+    tar --strip-components=1 -xzf /tmp/mod_perl-$MOD_PERL_VERSION.tar.gz -C /opt/mod_perl-$MOD_PERL_VERSION/src && \
+    rm /tmp/mod_perl-$MOD_PERL_VERSION.tar.gz
+WORKDIR /opt/mod_perl-$MOD_PERL_VERSION/src
+RUN perl Makefile.PL MP_APXS=/opt/httpd-$APACHE2_VERSION/bin/apxs
+RUN make
+
+# for mod_perl test
+RUN apt-get update -yq && apt-get install -yq --no-install-recommends sudo && apt-get clean && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+RUN cpanm HTML::HeadParser BSD::Resource Compress::Zlib LWP
+ADD etc/apache2/httpd.conf /opt/httpd-$APACHE2_VERSION/conf/httpd.conf
+RUN chown -R www-data:www-data .
+RUN sudo -u www-data -g www-data make test
+RUN make install
+
+# mod_apreq2
+RUN apt-get update -yq && apt-get install -yq --no-install-recommends libexpat1-dev && apt-get clean && \
+    rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+ENV MOD_APREQ2_VERSION 2.13
+RUN mkdir -p /opt/mod_apreq2-$MOD_APREQ2_VERSION/src
+RUN curl -SL http://ftp.riken.jp/net/apache//httpd/libapreq/libapreq2-$MOD_APREQ2_VERSION.tar.gz -o /tmp/mod_apreq2-$MOD_APREQ2_VERSION.tar.gz && \
+    echo "c11fb0861aa84dcc6cd0f0798b045eee */tmp/mod_apreq2-$MOD_APREQ2_VERSION.tar.gz" | md5sum -c - && \
+    tar --strip-components=1 -xzf /tmp/mod_apreq2-$MOD_APREQ2_VERSION.tar.gz -C /opt/mod_apreq2-$MOD_APREQ2_VERSION/src && \
+    rm /tmp/mod_apreq2-$MOD_APREQ2_VERSION.tar.gz
+WORKDIR /opt/mod_apreq2-$MOD_APREQ2_VERSION/src
+RUN ./configure --with-apache2-apxs=/opt/httpd-$APACHE2_VERSION/bin/apxs
+RUN make && make test && make install
+
+RUN tar czf /mod_perl2.tar.gz -C /opt/ ./perl-$PERL_VERSION ./httpd-$APACHE2_VERSION
+CMD ["cat", "/mod_perl2.tar.gz"]
+# vim:ft=Dockerfile
