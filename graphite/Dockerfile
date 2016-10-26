@@ -22,7 +22,7 @@ RUN curl -s https://bootstrap.pypa.io/get-pip.py > /tmp/get-pip.py
 RUN python /tmp/get-pip.py
 
 # install graphite modules
-RUN apt-get update && apt-get install -y libcairo2-dev --fix-missing && rm -fr /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libcairo2-dev libffi-dev  --fix-missing && rm -fr /var/lib/apt/lists/*
 
 RUN install -d -m 755 /var/lib/graphite
 WORKDIR /var/lib/graphite
