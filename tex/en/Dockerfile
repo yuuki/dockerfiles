@@ -29,7 +29,5 @@ RUN apt-get update -yq && \
 
 RUN cpanm Log::Log4perl Log::Dispatch::File YAML::Tiny File::HomeDir Unicode::GCString
 
-ENV LANGUAGE=en_US.UTF-8 LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-
 VOLUME /data
 WORKDIR /data
