@@ -18,8 +18,6 @@ RUN apt-get update -yq && \
   latexmk \
   texlive-fonts-recommended \
   texlive-fonts-extra \
-  fonts-noto-cjk \
-  fonts-noto-cjk-extra \
   poppler-utils \
   poppler-data \
   lmodern \
