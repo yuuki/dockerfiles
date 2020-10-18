@@ -38,5 +38,11 @@ RUN wget http://launchpadlibrarian.net/439337932/xpdf_3.04-13ubuntu4_amd64.deb -
     && dpkg -i /tmp/xpdf_3.04.deb \
     && rm -f /tmp/*.deb
 
+RUN tlmgr init-usertree
+
+# Install ieee bibtex style
+RUN tlmgr option repository ftp://tug.org/historic/systems/texlive/2019/tlnet-final
+RUN tlmgr install biblatex-ieee
+
 VOLUME /data
 WORKDIR /data
