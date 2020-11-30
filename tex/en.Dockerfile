@@ -44,5 +44,10 @@ RUN tlmgr init-usertree
 RUN tlmgr option repository ftp://tug.org/historic/systems/texlive/2019/tlnet-final
 RUN tlmgr install biblatex-ieee
 
+# Fix an issue that an eps file is displayed as blank.
+RUN apt-get update -yq && apt-get -yq install --no-install-recommends --fix-missing \
+	texlive-font-utils \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 VOLUME /data
 WORKDIR /data
