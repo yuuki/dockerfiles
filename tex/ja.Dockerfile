@@ -14,7 +14,7 @@ RUN tlmgr init-usertree
 RUN kanji-config-updmap-sys ipaex
 
 # Install xpdf
-RUN wget https://xpdfreader-dl.s3.amazonaws.com/xpdf-japanese.tar.gz && tar xvfz ./xpdf-japanese.tar.gz && mkdir -p /usr/local/share/xpdf && mv ./xpdf-japanese /usr/local/share/xpdf/japanese
+RUN wget https://dl.xpdfreader.com/xpdf-japanese.tar.gz && tar xvfz ./xpdf-japanese.tar.gz && mkdir -p /usr/local/share/xpdf && mv ./xpdf-japanese /usr/local/share/xpdf/japanese
 COPY xpdfrc /data/.xpdfrc
 
 
