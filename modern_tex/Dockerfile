@@ -9,6 +9,8 @@ RUN apt-get update -yq && apt-get -yq install --no-install-recommends --fix-miss
     pandoc \
     texlive-latex-extra \
     texlive-extra-utils \
+    texlive-xetex \
+    texlive-luatex \
     texlive-bibtex-extra \
     texlive-science \
     texlive-lang-cjk \
