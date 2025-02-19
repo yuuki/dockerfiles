@@ -15,13 +15,14 @@ RUN apt-get update -yq && apt-get -yq install --no-install-recommends --fix-miss
     texlive-science \
     texlive-lang-cjk \
     texlive-lang-japanese \
+    latex-cjk-japanese \
     fonts-noto-cjk \
     fonts-noto-cjk-extra \
     biber \
     latexmk \
     texlive-fonts-recommended \
     texlive-fonts-extra \
-	  texlive-font-utils \
+    texlive-font-utils \
     poppler-utils \
     poppler-data \
     lmodern \
